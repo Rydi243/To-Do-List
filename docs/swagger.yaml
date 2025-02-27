@@ -1,0 +1,140 @@
+basePath: /
+definitions:
+  contract.GetTask:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: integer
+      id:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  contract.PutDelTask:
+    properties:
+      description:
+        type: integer
+      id:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+  contract.Task:
+    properties:
+      description:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API для управления задачами в To-Do List
+  title: To-Do List API
+  version: "1.0"
+paths:
+  /tasks:
+    get:
+      description: Возвращает список всех задач
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/contract.GetTask'
+            type: array
+        "500":
+          description: Ошибка при получении задач
+          schema:
+            type: string
+      summary: Получить список задач
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Добавляет новую задачу в список
+      parameters:
+      - description: Данные задачи
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/contract.Task'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Запись добавлена
+          schema:
+            type: string
+        "500":
+          description: Ошибка при добавлении задачи
+          schema:
+            type: string
+      summary: Добавить задачу
+      tags:
+      - tasks
+  /tasks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет задачу по ID
+      parameters:
+      - description: Данные задачи
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/contract.PutDelTask'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Запись удалена
+          schema:
+            type: string
+        "500":
+          description: Ошибка при удалении задачи
+          schema:
+            type: string
+      summary: Удалить задачу
+      tags:
+      - tasks
+    put:
+      consumes:
+      - application/json
+      description: Обновляет существующую задачу
+      parameters:
+      - description: Данные задачи
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/contract.PutDelTask'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Запись обновлена
+          schema:
+            type: string
+        "500":
+          description: Ошибка при обновлении задачи
+          schema:
+            type: string
+      summary: Обновить задачу
+      tags:
+      - tasks
+swagger: "2.0"
