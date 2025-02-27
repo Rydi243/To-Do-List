@@ -26,6 +26,13 @@ type GetTask struct {
 	Updated_at  time.Time
 }
 
+type PutDelTask struct {
+	Id          int
+	Title       string
+	Description int
+	Status      string
+}
+
 func postHandler(db *sql.DB, t Task) error {
 	query := "INSERT INTO tasks (title, description, status) VALUES ($1, $2, $3)"
 	_, err := db.Exec(query, t.Title, t.Description, t.Status)
@@ -51,6 +58,16 @@ func getHandler(db *sql.DB) ([]GetTask, error) {
 	}
 
 	return tasks, nil
+}
+func putHandler(db *sql.DB, i PutDelTask) error {
+	query := "UPDATE tasks SET title = $1, description = $2, status = $3, updated_at = NOW() WHERE id = $4"
+	_, err := db.Exec(query, i.Title, i.Description, i.Status, i.Id)
+	return err
+}
+func delHandler(db *sql.DB, i PutDelTask) error {
+	query := "DELETE FROM tasks WHERE id = $1"
+	_, err := db.Exec(query, i.Id)
+	return err
 }
 
 func main() {
@@ -85,13 +102,29 @@ func main() {
 		return c.JSON(tasks)
 	})
 
-	// r.Put("/tasks/:id", func (c fiber.Ctx) error {
+	r.Put("/tasks/:id", func(c fiber.Ctx) error {
+		var s PutDelTask
+		if err := json.Unmarshal(c.Body(), &s); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Ошибка при парсинге put")
+		}
 
-	// })
+		if err := putHandler(db, s); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Ошибка при обновлении задачи")
+		}
 
-	// r.Delete("/tasks/:id", func (c fiber.Ctx) error {
+		return c.SendString("Запись обновлена")
+	})
 
-	// })
+	r.Delete("/tasks/:id", func(c fiber.Ctx) error {
+		var s PutDelTask
+		if err := json.Unmarshal(c.Body(), &s); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Ошибка при парсинге delete")
+		}
+		if err := delHandler(db, s); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Ошибка при удалении задачи")
+		}
+		return c.SendString("Запись удалена")
+	})
 
 	log.Fatal(r.Listen(":8080"))
 }
