@@ -1,9 +1,11 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"encoding/json"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 
 	"log"
 
@@ -33,24 +35,25 @@ type PutDelTask struct {
 	Status      string
 }
 
-func postHandler(db *sql.DB, t Task) error {
+func postHandler(conn *pgx.Conn, t Task) error {
 	query := "INSERT INTO tasks (title, description, status) VALUES ($1, $2, $3)"
-	_, err := db.Exec(query, t.Title, t.Description, t.Status)
+	_, err := conn.Exec(context.Background(), query, t.Title, t.Description, t.Status)
 	return err
 }
-func getHandler(db *sql.DB) ([]GetTask, error) {
+func getHandler(conn *pgx.Conn) ([]GetTask, error) {
 	query := "SELECT id, title, description, status, created_at, updated_at FROM tasks"
-	row, err := db.Query(query)
+
+	rows, err := conn.Query(context.Background(), query)
 	if err != nil {
 		return nil, err
 	}
-	defer row.Close()
+	defer rows.Close()
 
 	var tasks []GetTask
 
-	for row.Next() {
+	for rows.Next() {
 		var t GetTask
-		err := row.Scan(&t.Id, &t.Title, &t.Description, &t.Status, &t.Created_at, &t.Updated_at)
+		err := rows.Scan(&t.Id, &t.Title, &t.Description, &t.Status, &t.Created_at, &t.Updated_at)
 		if err != nil {
 			return nil, err
 		}
@@ -59,24 +62,29 @@ func getHandler(db *sql.DB) ([]GetTask, error) {
 
 	return tasks, nil
 }
-func putHandler(db *sql.DB, i PutDelTask) error {
+func putHandler(conn *pgx.Conn, i PutDelTask) error {
 	query := "UPDATE tasks SET title = $1, description = $2, status = $3, updated_at = NOW() WHERE id = $4"
-	_, err := db.Exec(query, i.Title, i.Description, i.Status, i.Id)
+
+	_, err := conn.Exec(context.Background(), query, i.Title, i.Description, i.Status, i.Id)
+
 	return err
 }
-func delHandler(db *sql.DB, i PutDelTask) error {
-	query := "DELETE FROM tasks WHERE id = $1"
-	_, err := db.Exec(query, i.Id)
+func delHandler(conn *pgx.Conn, i PutDelTask) error {
+
+	_, err := conn.Exec(context.Background(), "DELETE FROM tasks WHERE id = $1", i.Id)
+
 	return err
 }
 
 func main() {
-	dsn := "user=postgres dbname=postgres sslmode=disable"
-	db, err := sql.Open("postgres", dsn)
+	dsn := "postgres://postgres:postgres@localhost:5432/postgres"
+
+	conn, err := pgx.Connect(context.Background(), dsn)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Unable to connection to database: %v\n", err)
 	}
-	defer db.Close()
+	defer conn.Close(context.Background())
+	log.Print("Connected db!")
 
 	r := fiber.New()
 
@@ -86,7 +94,7 @@ func main() {
 			return c.Status(fiber.StatusBadRequest).SendString("Ошибка при парсинге post")
 		}
 
-		if err := postHandler(db, s); err != nil {
+		if err := postHandler(conn, s); err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Ошибка при добавлении задачи")
 		}
 
@@ -94,7 +102,7 @@ func main() {
 	})
 
 	r.Get("/tasks", func(c fiber.Ctx) error {
-		tasks, err := getHandler(db)
+		tasks, err := getHandler(conn)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Ошибка при получении задач")
 		}
@@ -108,7 +116,7 @@ func main() {
 			return c.Status(fiber.StatusBadRequest).SendString("Ошибка при парсинге put")
 		}
 
-		if err := putHandler(db, s); err != nil {
+		if err := putHandler(conn, s); err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Ошибка при обновлении задачи")
 		}
 
@@ -120,7 +128,7 @@ func main() {
 		if err := json.Unmarshal(c.Body(), &s); err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("Ошибка при парсинге delete")
 		}
-		if err := delHandler(db, s); err != nil {
+		if err := delHandler(conn, s); err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Ошибка при удалении задачи")
 		}
 		return c.SendString("Запись удалена")
