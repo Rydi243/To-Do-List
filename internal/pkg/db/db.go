@@ -15,7 +15,7 @@ func NewDB() *pgx.Conn {
 	if err != nil {
 		log.Fatalf("Unable to connection to database: %v\n", err)
 	}
-	defer conn.Close(context.Background())
+	// defer conn.Close(context.Background())
 	log.Print("Connected db!")
 
 	return conn

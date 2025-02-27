@@ -16,4 +16,4 @@ db-down:
 		docker stop my_postgres
 
 run:
-		go run ./main.go
+		go run ./cmd/main.go

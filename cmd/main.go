@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 
@@ -14,6 +15,7 @@ import (
 
 func main() {
 	conn := db.NewDB()
+	defer conn.Close(context.Background())
 
 	r := fiber.New()
 
