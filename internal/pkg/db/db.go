@@ -13,10 +13,10 @@ func NewDB() *pgx.Conn {
 
 	conn, err := pgx.Connect(context.Background(), config.PgDSN)
 	if err != nil {
-		log.Fatalf("Unable to connection to database: %v\n", err)
+		log.Fatalf("Ошибка подключения к базе данных: %v\n", err)
 	}
 	// defer conn.Close(context.Background())
-	log.Print("Connected db!")
+	log.Print("Подключение к PostgreSQL успешно на порту 5432")
 
 	return conn
 }

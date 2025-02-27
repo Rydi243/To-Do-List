@@ -18,6 +18,7 @@ func main() {
 	defer conn.Close(context.Background())
 
 	r := fiber.New()
+	log.Println("Роутер fiber создан")
 
 	r.Post("/tasks", func(c fiber.Ctx) error {
 		var s contract.Task

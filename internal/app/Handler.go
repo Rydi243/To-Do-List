@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"log"
 
 	"github.com/jackc/pgx/v5"
 
@@ -13,6 +14,7 @@ import (
 func PostHandler(conn *pgx.Conn, t contract.Task) error {
 	query := "INSERT INTO tasks (title, description, status) VALUES ($1, $2, $3)"
 	_, err := conn.Exec(context.Background(), query, t.Title, t.Description, t.Status)
+	log.Printf("Добавлена запись в таблицу tasks")
 	return err
 }
 
@@ -36,6 +38,7 @@ func GetHandler(conn *pgx.Conn) ([]contract.GetTask, error) {
 		tasks = append(tasks, t)
 	}
 
+	log.Println("Выполнен запрос таблицы tasks")
 	return tasks, nil
 }
 
@@ -44,6 +47,7 @@ func PutHandler(conn *pgx.Conn, i contract.PutDelTask) error {
 
 	_, err := conn.Exec(context.Background(), query, i.Title, i.Description, i.Status, i.Id)
 
+	log.Println("Обновлена информация в таблице tasks")
 	return err
 }
 
@@ -51,5 +55,6 @@ func DelHandler(conn *pgx.Conn, i contract.PutDelTask) error {
 
 	_, err := conn.Exec(context.Background(), "DELETE FROM tasks WHERE id = $1", i.Id)
 
+	log.Println("Удалена информация из таблицы tasks")
 	return err
 }
