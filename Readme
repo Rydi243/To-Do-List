@@ -1,0 +1,3 @@
+Нужен запущенный docker и образ postgres 14.3
+Сделал Makefile с запуском контейнера бд и миграциями. 1) make db-up, 2) make migrate-up
+Документация через swagger, миграции через goose. Драйвер postgres pgx. 
